@@ -78,5 +78,7 @@ class server(object):
         self.result = ''
         self.err = ''
     def __del__(self):
-        if self.connect_status:
+        try:
             self.ssh.close()
+        except:
+            pass

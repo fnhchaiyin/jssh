@@ -60,21 +60,15 @@ def main():
             xshell_entry.bind('<Control-c>', send_ctrl_c)
             xshell_entry.pack(fill=X)
             def put_resoult():
+                sleep(1)
                 while True:
                     try:
-                        r = shell.recv(1024)
-                    except:
-                        break
-                    if r:
-                        xshell_text.insert(END,re.sub('\[.*?m','',r))
+                        xshell_text.insert(END,re.sub('\[.*?m','',shell.recv(1024)))
+                        sleep(0.1)
                         xshell_text.see(END)
-                    sleep(0.1)
-                    try:
-                        root.update()
                     except:
                         break
-            th=Thread(target=put_resoult)
-            th.start()
+            Thread(target=put_resoult).start()
         else:
             tl = Toplevel() 
             tl.attributes("-topmost", 1)
@@ -101,32 +95,44 @@ def main():
                 for (num, value) in enumerate(server_list):
                     if len(value) > 4 and not value.startswith('#'):
                         try:
-                            ip_addr = value.split()[0]
+                            hostname = value.split()[0]
                         except:
                             pass
                         try:
-                             if gl.server_all[ip_addr]:
-                                 err='ERROR,At line %s:Duplicate ipaddr %s\n' % (num,ip_addr)
+                            ipinfo = value.split()[1]
+                            ip_addr = ipinfo.split(":")[0]
+                        except:
+                            pass
+                        try:
+                             if gl.server_all[hostname]:
+                                 err='ERROR,At line %s:Duplicate hostname %s\n' % (num,hostname)
+                                 text.insert(END, err)
+                                 save_log(log=err)
+                        except:
+                             pass
+                        try:
+                             if gl.server_all[hostname].ip_addr+":"+gl.server_all[hostname].port:
+                                 err='ERROR,At line %s:Duplicate ip and port %s\n' % (num,ipinfo)
                                  text.insert(END, err)
                                  save_log(log=err)
                         except:
                              pass
                         try:
                             try:
-                                port = int(value.split()[1])
+                                port = int(ipinfo.split(":")[1])
                             except:
                                 port = 22
                             username = value.split()[2]
                             password = value.split()[3]
-                            gl.server_all[ip_addr] = server(ip=ip_addr, port=port, username=username, password=password)
-                            gl.server_all[ip_addr].selected = IntVar()
-                            gl.cbuts[ip_addr] = (Checkbutton(listframe, text=ip_addr, font=ft, bg='black', foreground="blue", variable=gl.server_all[ip_addr].selected))
-                            gl.cbuts[ip_addr].select()
-                            gl.cbuts[ip_addr].pack()
-                            gl.cbuts[ip_addr].bind("<Button-3>", lambda event, i=ip_addr:find_it(event, i))
-                            gl.cbuts[ip_addr].bind("<Control-Button-1>", lambda event, i=ip_addr:xshell(event, i))
+                            gl.server_all[hostname] = server(ip=ip_addr, port=port, username=username, password=password)
+                            gl.server_all[hostname].selected = IntVar()
+                            gl.cbuts[hostname] = (Checkbutton(listframe, text=hostname, font=ft, bg='black', foreground="blue", variable=gl.server_all[hostname].selected))
+                            gl.cbuts[hostname].select()
+                            gl.cbuts[hostname].pack()
+                            gl.cbuts[hostname].bind("<Button-3>", lambda event, i=hostname:find_it(event, i))
+                            gl.cbuts[hostname].bind("<Control-Button-1>", lambda event, i=hostname:xshell(event, i))
                         except IndexError:
-                            err = 'ERROR,At line %s,wrong host info: %s\n' % (num + 1, ip_addr)
+                            err = 'ERROR,At line %s,wrong host info: %s\n' % (num + 1, value)
                             text.insert(END, err)
                             save_log(log=err)
 
@@ -768,8 +774,8 @@ a.
     def help():
         help_msg = '''
     You should create server-list file frist:
-                 formate：ip port username password
-                 eg：192.168.1.10 22 root password
+                 formate：hostname ip:port username password
+                 eg：hostname 192.168.1.10:22 root password
                  use utf-8 formate better，one server one line
     Use Ctrl + left-click a server that can be manipulated separately.
     Use right-click on a server you can find it in the results.
