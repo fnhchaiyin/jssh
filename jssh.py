@@ -55,6 +55,8 @@ def main():
             xshell_text.configure(yscrollcommand=xshell_scroll.set)
             xshell_scroll.pack(side=RIGHT, fill=Y)
             xshell_text.pack(fill=BOTH,expand=YES)
+            xshell_Label=Label(xshell_top, text="command:")
+            xshell_Label.pack(side=LEFT)
             xshell_entry = Entry(xshell_top, insertbackground='green', width=50)
             xshell_entry.bind('<Key-Return>',lambda event,i=i:single_exec_cmd(event,i))
             xshell_entry.bind('<Control-c>', send_ctrl_c)
